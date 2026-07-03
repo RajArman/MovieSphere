@@ -1,19 +1,23 @@
-import jwt from 'jsonwebtoken';
-import bcrypt from 'bcrypt';
-import User from '../models/User.js';
-import { JWT_SECRET, JWT_EXPIRES_IN } from '../config/jwt.js';
+import jwt from "jsonwebtoken";
+import bcrypt from "bcrypt";
+import User from "../models/User.js";
+import { JWT_SECRET, JWT_EXPIRES_IN } from "../config/jwt.js";
 
 const COOKIE_MAX_AGE = 7 * 24 * 60 * 60 * 1000;
+
+const cookieOptions = {
+  httpOnly: true,
+  sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+  secure: process.env.NODE_ENV === "production",
+};
 
 const sendTokenCookie = (res, userId) => {
   const token = jwt.sign({ id: userId }, JWT_SECRET, {
     expiresIn: JWT_EXPIRES_IN,
   });
 
-  res.cookie('token', token, {
-    httpOnly: true,
-    sameSite: 'lax',
-    secure: process.env.NODE_ENV === 'production',
+  res.cookie("token", token, {
+    ...cookieOptions,
     maxAge: COOKIE_MAX_AGE,
   });
 };
@@ -32,7 +36,7 @@ export const signup = async (req, res, next) => {
     if (!username || !email || !password) {
       return res.status(400).json({
         success: false,
-        message: 'Please provide username, email, and password',
+        message: "Please provide username, email, and password",
       });
     }
 
@@ -43,7 +47,7 @@ export const signup = async (req, res, next) => {
     if (existingUser) {
       return res.status(400).json({
         success: false,
-        message: 'User with this email or username already exists',
+        message: "User with this email or username already exists",
       });
     }
 
@@ -53,7 +57,7 @@ export const signup = async (req, res, next) => {
 
     res.status(201).json({
       success: true,
-      message: 'Account created successfully',
+      message: "Account created successfully",
       user: formatUser(user),
     });
   } catch (error) {
@@ -68,16 +72,16 @@ export const login = async (req, res, next) => {
     if (!email || !password) {
       return res.status(400).json({
         success: false,
-        message: 'Please provide email and password',
+        message: "Please provide email and password",
       });
     }
 
-    const user = await User.findOne({ email }).select('+password');
+    const user = await User.findOne({ email }).select("+password");
 
     if (!user) {
       return res.status(401).json({
         success: false,
-        message: 'Invalid email or password',
+        message: "Invalid email or password",
       });
     }
 
@@ -86,7 +90,7 @@ export const login = async (req, res, next) => {
     if (!isMatch) {
       return res.status(401).json({
         success: false,
-        message: 'Invalid email or password',
+        message: "Invalid email or password",
       });
     }
 
@@ -94,7 +98,7 @@ export const login = async (req, res, next) => {
 
     res.status(200).json({
       success: true,
-      message: 'Logged in successfully',
+      message: "Logged in successfully",
       user: formatUser(user),
     });
   } catch (error) {
@@ -103,16 +107,14 @@ export const login = async (req, res, next) => {
 };
 
 export const logout = (req, res) => {
-  res.cookie('token', '', {
-    httpOnly: true,
-    sameSite: 'lax',
-    secure: process.env.NODE_ENV === 'production',
+  res.cookie("token", "", {
+    ...cookieOptions,
     expires: new Date(0),
   });
 
   res.status(200).json({
     success: true,
-    message: 'Logged out successfully',
+    message: "Logged out successfully",
   });
 };
 
