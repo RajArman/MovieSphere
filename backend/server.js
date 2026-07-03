@@ -20,7 +20,11 @@ connectDB();
 
 app.use(
   cors({
-    origin: ["http://localhost:5173", "http://localhost:5174"],
+    origin: [
+      "http://localhost:5173",
+      "http://localhost:5174",
+      process.env.CLIENT_URL,
+    ],
     credentials: true,
   })
 );
@@ -45,6 +49,12 @@ app.use("/api/favorites", favoritesRoutes);
 
 app.use(errorHandler);
 
-app.listen(PORT, () => {
-  console.log(`Server running in ${process.env.NODE_ENV || 'development'} mode on port ${PORT}`);
-});
+if (process.env.NODE_ENV !== "production") {
+  app.listen(PORT, () => {
+    console.log(
+      `Server running in ${process.env.NODE_ENV || "development"} mode on port ${PORT}`
+    );
+  });
+}
+
+export default app;
